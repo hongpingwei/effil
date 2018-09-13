@@ -66,8 +66,7 @@ int luaopen_libeffil(lua_State* L) {
             "channel", createChannel,
             "type", getLuaTypename,
             "pairs", SharedTable::globalLuaPairs,
-            "ipairs", SharedTable::globalLuaIPairs,
-            "allow_table_upvalues", luaAllowTableUpvalues
+            "ipairs", SharedTable::globalLuaIPairs
     );
     sol::stack::push(lua, publicApi);
     return 1;
