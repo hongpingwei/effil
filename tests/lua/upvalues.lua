@@ -81,6 +81,8 @@ test.upvalues.check_global_env = function()
     test.equal(ret, "13, local, 79")
 end
 
+if LUA_VERSION > 51 then
+
 test.upvalues.check_env = function()
     local function create_foo()
         local _ENV = { key = 'value' }
@@ -93,3 +95,5 @@ test.upvalues.check_env = function()
     local ret = effil.thread(foo)():get()
     test.equal(ret, 'value')
 end
+
+end -- LUA_VERSION > 51
