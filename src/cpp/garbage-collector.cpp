@@ -7,10 +7,12 @@
 
 namespace effil {
 
+static const size_t MinimumSizeLeft = 100;
+
 GC::GC()
         : enabled_(true)
-        , lastCleanup_(0)
-        , step_(200) {}
+        , lastCleanup_(MinimumSizeLeft)
+        , step_(2.) {}
 
 // Here is the naive tri-color marking
 // garbage collecting algorithm implementation.
@@ -41,7 +43,7 @@ void GC::collect() {
     DEBUG << "Removing " << (objects_.size() - black.size()) << " out of " << objects_.size() << std::endl;
     objects_ = std::move(black);
 
-    lastCleanup_.store(0);
+    lastCleanup_.store(std::max(objects_.size(), MinimumSizeLeft));
 }
 
 size_t GC::count() const {
@@ -63,9 +65,13 @@ sol::table GC::exportAPI(sol::state_view& lua) {
     api["step"] = [](const sol::stack_object& newStep){
         auto previous = instance().step();
         if (newStep.valid()) {
-            REQUIRE(newStep.get_type() == sol::type::number) << "bad argument #1 to 'effil.gc.step' (number expected, got " << luaTypename(newStep) << ")";
-            REQUIRE(newStep.as<int>() >= 0) << "effil.gc.step: invalid capacity value = " << newStep.as<int>();
-            instance().step(newStep.as<size_t>());
+            REQUIRE(newStep.get_type() == sol::type::number)
+                    << "bad argument #1 to 'effil.gc.step' (number expected, got "
+                    << luaTypename(newStep) << ")";
+            REQUIRE(newStep.as<double>() > 1)
+                    << "effil.gc.step: invalid capacity value = "
+                    << newStep.as<double>();
+            instance().step(newStep.as<double>());
         }
         return previous;
     };

@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <iostream>
+
 namespace effil {
 
 class GC {
@@ -17,8 +19,8 @@ public:
     // This method is used to create all managed objects.
     template <typename ViewType, typename... Args>
     ViewType create(Args&&... args) {
-        if (enabled_ && lastCleanup_.fetch_add(1) == step_)
-                collect();
+        if (enabled_ && count() >= step_ * lastCleanup_)
+            collect();
 
         std::unique_ptr<ViewType> object(new ViewType(std::forward<Args>(args)...));
         auto copy = *object;
@@ -43,8 +45,8 @@ public:
 private:
     mutable std::mutex lock_;
     bool enabled_;
-    std::atomic<size_t> lastCleanup_;
-    size_t step_;
+    std::atomic<uint64_t> lastCleanup_;
+    double step_;
     std::unordered_map<GCHandle, std::unique_ptr<BaseGCObject>> objects_;
 
 private:
@@ -55,8 +57,8 @@ private:
     void collect();
     void pause() { enabled_ = false; }
     void resume() { enabled_ = true; }
-    size_t step() const { return step_; }
-    void step(size_t newStep) { step_ = newStep; }
+    double step() const { return step_; }
+    void step(double newStep) { step_ = newStep; }
     bool enabled() { return enabled_; }
     size_t count() const;
 };
